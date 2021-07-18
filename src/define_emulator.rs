@@ -1,6 +1,5 @@
 
 
-pub mod de {
 pub const MEMORY_SIZE: u32 = 1024 * 1024;
 pub const REGISTER_COUNT : usize = 8;
 pub const BIOS_OFFSET: usize = 0x7c00;
@@ -26,5 +25,4 @@ pub fn create_emulator(size: usize,eip:u32,esp : u32 ) -> Emulator
     emu.registers[Register::ESP as usize] = esp;
 
     emu
-}
 }

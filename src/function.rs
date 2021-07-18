@@ -1,10 +1,10 @@
 
-
-fn get_code8(emu : &mut de::Emulator, index : usize) -> u8{
+use crate::*;
+pub fn get_code8(emu : &mut Emulator, index : usize) -> u8{
     emu.memory[emu.eip as usize + index]
 
 }
-fn get_code32(emu : &mut Emulator, index : usize) -> u32{
+pub fn get_code32(emu : &mut Emulator, index : usize) -> u32{
     let mut res : u32 = 0;
 
     for i in 0..4{
@@ -15,7 +15,7 @@ fn get_code32(emu : &mut Emulator, index : usize) -> u32{
     res 
 }
 
-fn get_sign_code8(emu: &mut Emulator, index : usize) -> i8{
+pub fn get_sign_code8(emu: &mut Emulator, index : usize) -> i8{
     emu.memory[emu.eip as usize + index] as i8
 }
 pub fn get_sign_code32(emu: &mut Emulator, index : usize) -> i32{

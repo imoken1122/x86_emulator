@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "rust_emu"
+name = "x86emu"
 version = "0.1.0"

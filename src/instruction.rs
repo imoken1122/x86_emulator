@@ -1,4 +1,6 @@
 
+use crate::*;
+use function::*;
 
 
 pub fn mov_r32_rm32(emu:&mut Emulator){
