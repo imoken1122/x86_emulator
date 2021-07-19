@@ -6,13 +6,15 @@ use std::io;
 
 pub mod instruction;
 pub mod function;
+pub mod modrm;
 use instruction::*;
 use function::*;
+
+type Inst_type = [Option<fn(&mut Emulator)>; 256];
 
 pub const MEMORY_SIZE: u32 = 1024 * 1024;
 pub const REGISTER_COUNT : usize = 8;
 pub const BIOS_OFFSET: usize = 0x7c00;
-
 pub enum Register {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI}
 pub const register_name:[&str;REGISTER_COUNT]= ["EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"];
 pub struct Emulator{ 
@@ -53,7 +55,9 @@ fn read_to_memory(file : &mut File, emu : &mut Emulator) -> Result<usize, io::Er
     
     Ok(cnt)
 }
-
+fn dump_memory(emu : &mut Emulator){
+    println!("");
+}
 
 fn main() {
     let args : Vec<String> = env::args().collect();
@@ -65,7 +69,7 @@ fn main() {
     let mut f = File::open(&args[1]).expect("file not found");
     read_to_memory(&mut f, &mut emu).expect("faild to read file");
 
-    let mut instructions : [Option<fn(&mut Emulator)>; 256] = [None; 256];
+    let mut instructions : Inst_type = [None; 256];
     init_instruction(&mut instructions);
 
     while emu.eip < MEMORY_SIZE{
