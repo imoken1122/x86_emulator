@@ -11,7 +11,7 @@ pub fn get_code32(emu : &mut Emulator, index : usize) -> u32{
     let mut res : u32 = 0;
 
     for i in 0..4{
-        // litle endian
+        // little endian
         res |= (get_code8(emu, index + i) as u32) << (i * 8);
     }
 
