@@ -33,10 +33,10 @@ pub fn get_register32(emu : &mut Emulator, index : usize) -> u32{
 pub fn get_register8(emu : &mut Emulator, index : usize, flag : i8) -> u8{
     // 1 => Low
     // 2 => High
+    // 3 => ALL
     match flag{
         1 => (emu.registers[index] & 0xff) as u8,
         2 => ((emu.registers[index] >> 8) & 0xff ) as u8,
-        3 => (emu.registers[index] & 0xffff) as u8,
         _ => 0,
     }
 }

@@ -81,6 +81,12 @@ pub fn inc_rm32(emu: &mut Emulator, modrm : &mut ModRM){
 	let value: u32 = get_rm32(emu, modrm);
 	set_rm32(emu, modrm, value + 1);
 }
+pub fn inc_r32(emu: &mut Emulator){
+	let reg = get_code8(emu,0) - 0x40;
+	let value = get_register32(emu, reg as usize) ;
+	set_register32(emu,reg as usize, value + 1);
+	emu.eip += 1;
+}
 pub fn dec_rm32(emu: &mut Emulator, modrm: &mut ModRM){
 	let value: u32 = get_rm32(emu, modrm);
 	set_rm32(emu, modrm, value - 1);
@@ -181,11 +187,22 @@ pub fn cmp_rm32_imm8(emu: &mut Emulator, modrm: &mut ModRM){
 	emu.eip += 1; //
 	let res  = rm32 - imm8 ;
 	update_eflags_sub(emu , rm32, imm8 ,res as u64);// converting u64 is to know carry 
-
-
 }
+pub fn cmp_al_imm8(emu: &mut Emulator){
+	let imm8 : u8 = get_code8(emu,1);
+	let al : u8 = get_register8(emu,Register::EAX as usize,1);
+	let res = (al as i8 - imm8 as i8) as u8;
 
-
+	update_eflags_sub(emu ,al.try_into().unwrap(), imm8.try_into().unwrap(), res.try_into().unwrap());
+	emu.eip += 2;
+}
+pub fn cmp_eax_imm32(emu : &mut Emulator){
+	let eax = get_register32(emu,Register::EAX as usize);
+	let imm32 = get_code32(emu,1);
+	let res = (eax as i32 - imm32 as i32) as u32;
+	update_eflags_sub(emu ,eax, imm32, res.try_into().unwrap());
+	emu.eip += 5;
+}
 pub fn js(emu : &mut Emulator){
 	let mut diff = 0;
 	if is_sign(emu){
@@ -285,6 +302,12 @@ pub fn out_dx_al(emu : &mut Emulator){
 pub fn init_instruction(instructions : &mut InstType){
 	instructions[0x01] = Some(add_rm32_r32);
 	instructions[0x3b] = Some(cmp_r32_rm32);
+	instructions[0x3c] = Some(cmp_al_imm8);
+	instructions[0x3d] = Some(cmp_eax_imm32);
+	
+	for i in 0..8 {
+        instructions[0x40 + i] = Some(inc_r32);
+    }
 	for i in 0..8 {
         instructions[0x50 + i] = Some(push_r32);
     }

@@ -79,6 +79,7 @@ fn main() {
         
         let code : u8 = get_code8(&mut emu, 0);
 
+
         if flag != 1{
             println!("EIP = {:#010x}, Code = {:#04x}", emu.eip, code);
         }
