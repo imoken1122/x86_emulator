@@ -30,6 +30,35 @@ pub fn set_register32(emu : &mut Emulator,index: usize, value : u32){
 pub fn get_register32(emu : &mut Emulator, index : usize) -> u32{
     emu.registers[index]
 }
+pub fn get_register8(emu : &mut Emulator, index : usize, flag : i8) -> u8{
+    // 1 => Low
+    // 2 => High
+    match flag{
+        1 => (emu.registers[index] & 0xff) as u8,
+        2 => ((emu.registers[index] >> 8) & 0xff ) as u8,
+        3 => (emu.registers[index] & 0xffff) as u8,
+        _ => 0,
+    }
+}
+pub fn set_register8(emu: &mut Emulator,index : usize, value : u8, flag : u8){
+    match flag {
+        1 => {
+            let r : u32 = emu.registers[index] & 0xffffff00;
+            emu.registers[index] = r | (value as u32);
+        },
+        2 => {
+            let r : u32 = emu.registers[index] & 0xffff00ff;
+            emu.registers[index] = r | ((value as u32) << 8 );
+            },
+        3 => {
+            let r : u32 = emu.registers[index] & 0xffff0000;
+            emu.registers[index] = r | ((value as u32) << 8 );
+
+        } 
+        _ => println!("not exist this flag {}", flag),
+    }
+
+}
 pub fn get_memory8(emu : &mut Emulator, address : usize) -> u8{
     emu.memory[address]
 }
@@ -116,4 +145,22 @@ pub fn is_sign(emu: &mut Emulator) -> bool{
 }
 pub fn is_overflow(emu: &mut Emulator) -> bool{
     (emu.eflags & OVERFLOW_FLAG) !=0
+}
+use libc::*;
+pub fn io_in8(address : u16) -> u8{
+    match address{
+        // 0x03f8
+        1016 => unsafe {libc::getchar() as u8 },
+        _ => 0,
+    }
+}
+
+
+pub fn io_out8(address : u16, value : u8){
+    match address{ 
+        // 0x03f8
+        1016 => unsafe {libc::putchar(value.into())},
+        _ => 0,
+    };
+
 }

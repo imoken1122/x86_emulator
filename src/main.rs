@@ -2,6 +2,7 @@
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+use std::process;
 use std::io;
 
 pub mod instruction;
@@ -10,12 +11,12 @@ pub mod modrm;
 use instruction::*;
 use function::*;
 
-type Inst_type = [Option<fn(&mut Emulator)>; 256];
+type InstType = [Option<fn(&mut Emulator)>; 256];
 
 pub const MEMORY_SIZE: u32 = 1024 * 1024;
 pub const REGISTER_COUNT : usize = 8;
 pub const BIOS_OFFSET: usize = 0x7c00;
-pub enum Register {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI}
+pub enum Register {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI,}
 pub const register_name:[&str;REGISTER_COUNT]= ["EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"];
 pub struct Emulator{ 
     registers : [u32; REGISTER_COUNT],
@@ -60,24 +61,28 @@ fn dump_memory(emu : &mut Emulator){
 }
 
 fn main() {
-    let args : Vec<String> = env::args().collect();
-    if args.len() != 2 { 
-        println!("usage : not filename\n")
+    let mut args : Vec<String> = env::args().collect();
+    let mut flag = 0;
+    if &args[1] == "q"{
+        flag = 1;
+        args.remove(1);
     }
 
     let mut emu = create_emulator(MEMORY_SIZE as usize ,0x7c00,0x7c00);
     let mut f = File::open(&args[1]).expect("file not found");
     read_to_memory(&mut f, &mut emu).expect("faild to read file");
 
-    let mut instructions : Inst_type = [None; 256];
+    let mut instructions : InstType = [None; 256];
     init_instruction(&mut instructions);
 
     while emu.eip < MEMORY_SIZE{
         
         let code : u8 = get_code8(&mut emu, 0);
 
-        println!("EIP = {:#010x}, Code = {:#04x}", emu.eip, code);
-
+        if flag != 1{
+            println!("EIP = {:#010x}, Code = {:#04x}", emu.eip, code);
+        }
+        
         match instructions[code as usize]{
             Some(inst) => inst(&mut emu),
             None => {

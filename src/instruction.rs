@@ -31,7 +31,24 @@ pub fn mov_rm32_imm32(emu: &mut Emulator){
 	emu.eip += 4;
 	set_rm32(emu, &mut modrm, value);
 }
-
+pub fn mov_r8_imm8(emu: &mut Emulator){
+	let reg = get_code8(emu,0) - 0xB0;
+	let value = get_code8(emu,1);
+	set_register8(emu,reg.try_into().unwrap(),value,3);
+	emu.eip += 2;
+}
+pub fn mov_rm8_r8(emu: &mut Emulator){
+	emu.eip += 1;
+	let mut modrm = parse_modrm(emu);
+	let r8 = get_r8(emu, &mut modrm);
+	set_rm8(emu,&mut modrm, r8);
+}
+pub fn mov_r8_rm8(emu: &mut Emulator){
+	emu.eip += 1;
+	let mut modrm = parse_modrm(emu);
+	let rm8 = get_rm8(emu,&mut modrm);
+	set_r8(emu, &mut modrm , rm8);
+}
 pub fn add_rm32_r32(emu: &mut Emulator){
 	emu.eip += 1;
 	let mut modrm = parse_modrm(emu);
@@ -64,7 +81,10 @@ pub fn inc_rm32(emu: &mut Emulator, modrm : &mut ModRM){
 	let value: u32 = get_rm32(emu, modrm);
 	set_rm32(emu, modrm, value + 1);
 }
-
+pub fn dec_rm32(emu: &mut Emulator, modrm: &mut ModRM){
+	let value: u32 = get_rm32(emu, modrm);
+	set_rm32(emu, modrm, value - 1);
+}
 pub fn code_83(emu: &mut Emulator,){
 	emu.eip += 1;
 	let mut modrm = parse_modrm(emu);
@@ -80,7 +100,7 @@ pub fn code_ff(emu: &mut Emulator,){
 	let mut modrm = parse_modrm(emu);
 	match modrm.opcode { 
 		 0 => inc_rm32(emu, &mut modrm),
-		 //1=> dec_rm32(emu, &mut modrm),
+		 1 => dec_rm32(emu, &mut modrm),
 		 _ => println!("not implmented : FF{:#04x}",modrm.opcode),
 	}
 }
@@ -247,7 +267,22 @@ pub fn jle(emu: &mut Emulator){
 	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
 }
 
-pub fn init_instruction(instructions : &mut Inst_type){
+pub fn in_al_dx(emu: &mut Emulator){
+	let address : u32 = get_register32(emu, Register::EDX as usize) & 0xffff;
+	let value : u8 = io_in8(address.try_into().unwrap());
+	set_register8(emu,Register::EAX as usize, value, 1); // EAX -> AL
+	emu.eip += 1;
+}
+
+pub fn out_dx_al(emu : &mut Emulator){
+	let address : u32 = get_register32(emu, Register::EDX as usize) & 0xffff;
+	let value : u8 = get_register8(emu, Register::EAX as usize, 1); // EAX -> AL
+	io_out8(address.try_into().unwrap(), value);
+	
+	emu.eip += 1;
+}
+
+pub fn init_instruction(instructions : &mut InstType){
 	instructions[0x01] = Some(add_rm32_r32);
 	instructions[0x3b] = Some(cmp_r32_rm32);
 	for i in 0..8 {
@@ -271,9 +306,15 @@ pub fn init_instruction(instructions : &mut Inst_type){
 	instructions[0x7E] = Some(jle);
 
 	instructions[0x83] = Some(code_83);
+	instructions[0x88] = Some(mov_rm8_r8);
 	instructions[0x89] = Some(mov_rm32_r32);
+	instructions[0x8a] = Some(mov_r8_rm8);
 	instructions[0x90] = Some(nop);
 	instructions[0x8B] = Some(mov_r32_rm32);
+
+	for i in 0..8{
+        instructions[0xB0 + i] = Some(mov_r8_imm8);
+    }
 	for i in 0..8{
 		instructions[0xB8 + i] = Some(mov_r32_imm32);
 	}
@@ -282,6 +323,8 @@ pub fn init_instruction(instructions : &mut Inst_type){
   	instructions[0xC9] = Some(leave);
 	instructions[0xE8] = Some(call_rel32);
 	instructions[0xEB] = Some(short_jump);
+	instructions[0xEC] = Some(in_al_dx);
+	instructions[0xEE] = Some(out_dx_al);
 	instructions[0xE9] = Some(near_jump);
 	instructions[0xff] = Some(code_ff);
 	
