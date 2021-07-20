@@ -41,7 +41,7 @@ pub fn add_rm32_r32(emu: &mut Emulator){
 }
 
 pub fn add_rm32_imm8(emu: &mut Emulator, modrm: &mut ModRM){
-	let rm32 : u32 = get_rm32(emu,modrm);
+	let rm32 = get_rm32(emu,modrm);
 	let imm8 =  get_sign_code8( emu,0) as u32;
 	emu.eip += 1;
 	set_rm32(emu,modrm, rm32 + imm8);
@@ -49,9 +49,11 @@ pub fn add_rm32_imm8(emu: &mut Emulator, modrm: &mut ModRM){
 pub fn sub_rm32_imm8(emu: &mut Emulator, modrm: &mut ModRM){
 
 	let rm32 : u32 = get_rm32(emu,modrm);
-	let imm8 =  get_sign_code8( emu,0) as u32;
+	let imm8 : u32 =  get_sign_code8( emu,0) as u32;
 	emu.eip += 1;
-	set_rm32(emu,modrm, rm32 - imm8);
+	let res = rm32 - imm8;
+	set_rm32(emu,modrm, res);
+	update_eflags_sub(emu,rm32, imm8,res as u64);
 }
 pub fn short_jump(emu: &mut Emulator){
 	let diff : i8 = get_sign_code8(emu,1);
@@ -69,7 +71,7 @@ pub fn code_83(emu: &mut Emulator,){
 	match modrm.opcode{
 		0 => add_rm32_imm8(emu, &mut modrm),
 		5 => sub_rm32_imm8(emu, &mut modrm),
-
+		7 => cmp_rm32_imm8(emu, &mut modrm),
 		_ => println!("not implemented 83 {:#04x}", modrm.opcode),
 	}
 }
@@ -145,8 +147,109 @@ pub fn leave(emu: &mut Emulator){
 	emu.eip += 1;
 
 }
+pub fn cmp_r32_rm32(emu: &mut Emulator){
+	emu.eip += 1;
+	let mut  modrm = parse_modrm(emu);
+	let rm32 = get_rm32(emu, &mut modrm);
+	let r32 = get_r32(emu, &mut modrm);
+	let res = r32 as i64 - rm32 as i64;
+	update_eflags_sub(emu , r32, rm32 ,res as u64);
+}
+pub fn cmp_rm32_imm8(emu: &mut Emulator, modrm: &mut ModRM){
+	let rm32 : u32 = get_rm32(emu, modrm);
+	let imm8 : u32 = get_sign_code8(emu,0) as u32;
+	emu.eip += 1; //
+	let res  = rm32 - imm8 ;
+	update_eflags_sub(emu , rm32, imm8 ,res as u64);// converting u64 is to know carry 
+
+
+}
+
+
+pub fn js(emu : &mut Emulator){
+	let mut diff = 0;
+	if is_sign(emu){
+		diff = get_sign_code8(emu, 1);
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jns(emu: &mut Emulator){
+	let mut diff = 0;
+	if !is_sign(emu){
+		diff = get_sign_code8(emu, 1);
+
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+
+pub fn jc(emu : &mut Emulator){
+	let mut diff = 0;
+	if is_carry(emu){
+		diff = get_sign_code8(emu, 1);
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jnc(emu: &mut Emulator){
+	let mut diff = 0;
+	if !is_carry(emu){
+		diff = get_sign_code8(emu, 1);
+
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+
+pub fn jz(emu : &mut Emulator){
+	let mut diff = 0;
+	if is_zero(emu){
+		diff = get_sign_code8(emu, 1);
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jnz(emu: &mut Emulator){
+	let mut diff = 0;
+	if !is_zero(emu){
+		diff = get_sign_code8(emu, 1);
+
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jo(emu : &mut Emulator){
+	let mut diff = 0;
+	if is_overflow(emu){
+		diff = get_sign_code8(emu, 1);
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jno(emu: &mut Emulator){
+	let mut diff = 0;
+	if !is_overflow(emu){
+		diff = get_sign_code8(emu, 1);
+
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+
+pub fn jl(emu : &mut Emulator){
+	let mut diff = 0;
+	// is_sign = 1 if a < b  else 0
+	if is_sign(emu) != is_overflow(emu){
+		diff = get_sign_code8(emu, 1);
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jle(emu: &mut Emulator){
+	let mut diff = 0;
+	// is_sign = 1 if a <= b  else 0
+	if is_zero(emu) || (is_sign(emu) != is_overflow(emu)){
+		diff = get_sign_code8(emu, 1);
+
+	}
+	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+
 pub fn init_instruction(instructions : &mut Inst_type){
 	instructions[0x01] = Some(add_rm32_r32);
+	instructions[0x3b] = Some(cmp_r32_rm32);
 	for i in 0..8 {
         instructions[0x50 + i] = Some(push_r32);
     }
@@ -155,6 +258,18 @@ pub fn init_instruction(instructions : &mut Inst_type){
     }
 	instructions[0x68] = Some(push_imm32);
 	instructions[0x6a] = Some(push_imm8);
+
+	instructions[0x70] = Some(jo);
+	instructions[0x71] = Some(jno);
+	instructions[0x72] = Some(jc);
+	instructions[0x73] = Some(jnc);
+	instructions[0x74] = Some(jz);
+	instructions[0x75] = Some(jnz);
+	instructions[0x78] = Some(js);
+	instructions[0x79] = Some(jns);
+	instructions[0x7C] = Some(jl);
+	instructions[0x7E] = Some(jle);
+
 	instructions[0x83] = Some(code_83);
 	instructions[0x89] = Some(mov_rm32_r32);
 	instructions[0x90] = Some(nop);

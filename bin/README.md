@@ -137,3 +137,105 @@ EDI = 0x00000000
 EIP = 0x00000000
 
 ```
+
+
+## test4
+
+__if__, __jump by condition__(js,jz,jl,jo,jl etc..)
+```
+#----- asm -----#
+
+00000000  55                push ebp
+00000001  89E5              mov ebp,esp
+00000003  837D0800          cmp dword [ebp+0x8],byte +0x0
+00000007  7805              js 0xe
+00000009  8B4508            mov eax,[ebp+0x8]
+0000000C  EB05              jmp short 0x13
+0000000E  8B4508            mov eax,[ebp+0x8]
+00000011  F7D8              neg eax
+00000013  5D                pop ebp
+00000014  C3                ret
+00000015  55                push ebp
+00000016  89E5              mov ebp,esp
+00000018  B803000000        mov eax,0x3
+0000001D  5D                pop ebp
+0000001E  C3                ret
+
+#----- result -----#
+
+EAX = 0x00000003
+ECX = 0x00000000
+EDX = 0x00000000
+EBX = 0x00000000
+ESP = 0x00007c00
+EBP = 0x00000000
+ESI = 0x00000000
+EDI = 0x00000000
+EIP = 0x00000000
+
+```
+
+## test5
+
+__while__
+
+```
+#----- C -----#
+
+
+int sum(int a, int b)
+{
+    int sum;
+    sum = 0;
+    while (a <= b) {
+        sum += a;
+        a++;
+    }
+    return sum; // 55
+}
+
+int main(void)
+{
+    return sum(1, 10);
+}
+
+
+
+#----- asm -----#
+
+00000000  55                push ebp
+00000001  89E5              mov ebp,esp
+00000003  83EC10            sub esp,byte +0x10
+00000006  C745FC00000000    mov dword [ebp-0x4],0x0
+0000000D  EB0A              jmp short 0x19
+0000000F  8B4508            mov eax,[ebp+0x8]
+00000012  0145FC            add [ebp-0x4],eax
+00000015  83450801          add dword [ebp+0x8],byte +0x1
+00000019  8B4508            mov eax,[ebp+0x8]
+0000001C  3B450C            cmp eax,[ebp+0xc]
+0000001F  7EEE              jng 0xf
+00000021  8B45FC            mov eax,[ebp-0x4]
+00000024  C9                leave
+00000025  C3                ret
+00000026  55                push ebp
+00000027  89E5              mov ebp,esp
+00000029  6A0A              push byte +0xa
+0000002B  6A01              push byte +0x1
+0000002D  E8CEFFFFFF        call 0x0
+00000032  83C408            add esp,byte +0x8
+00000035  C9                leave
+00000036  C3                ret
+
+#----- result -----#
+
+EAX = 0x00000037 ; 55
+ECX = 0x00000000
+EDX = 0x00000000
+EBX = 0x00000000
+ESP = 0x00007c00
+EBP = 0x00000000
+ESI = 0x00000000
+EDI = 0x00000000
+EIP = 0x000000
+
+```
