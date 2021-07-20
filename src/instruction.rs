@@ -34,7 +34,7 @@ pub fn mov_rm32_imm32(emu: &mut Emulator){
 pub fn mov_r8_imm8(emu: &mut Emulator){
 	let reg = get_code8(emu,0) - 0xB0;
 	let value = get_code8(emu,1);
-	set_register8(emu,reg.try_into().unwrap(),value,3);
+	set_register8(emu,reg.try_into().unwrap(),value,1);
 	emu.eip += 2;
 }
 pub fn mov_rm8_r8(emu: &mut Emulator){

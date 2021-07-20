@@ -50,11 +50,6 @@ pub fn set_register8(emu: &mut Emulator,index : usize, value : u8, flag : u8){
             let r : u32 = emu.registers[index] & 0xffff00ff;
             emu.registers[index] = r | ((value as u32) << 8 );
             },
-        3 => {
-            let r : u32 = emu.registers[index] & 0xffff0000;
-            emu.registers[index] = r | ((value as u32) << 8 );
-
-        } 
         _ => println!("not exist this flag {}", flag),
     }
 

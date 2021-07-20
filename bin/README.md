@@ -141,7 +141,7 @@ EIP = 0x00000000
 
 ## test4
 
-__if__, __jump by condition__(js,jz,jl,jo,jl etc..)
+__if__, __jump by eflags__(js,jz,jl,jo,jl etc..)
 ```
 #----- asm -----#
 
@@ -238,4 +238,79 @@ ESI = 0x00000000
 EDI = 0x00000000
 EIP = 0x000000
 
+```
+
+
+## test6 
+
+__I/O__
+
+
+```
+
+#----- asm  -----#
+
+BITS 32
+    org 0x7c00
+start:
+    mov edx, 0x03f8
+mainloop:
+    mov al, '>'    ; プロンプトを表示
+    out dx, al
+input:
+    in al, dx       ; 1文字入力
+    cmp al, 'h'
+    je puthello     ; hならhelloを表示
+    cmp al, 'w'
+    je putworld     ; wならworldを表示
+    cmp al, 'q'
+    je fin          ; qなら終了
+    jmp input       ; それ以外なら再入力
+puthello:
+    mov esi, msghello
+    call puts
+    jmp mainloop
+putworld:
+    mov esi, msgworld
+    call puts
+    jmp mainloop
+fin:
+    jmp 0
+
+; esiに設定された文字列を表示するサブルーチン
+puts:
+    mov al, [esi]
+    inc esi
+    cmp al, 0
+    je putsend
+    out dx, al
+    jmp puts
+putsend:
+    ret
+
+msghello:
+    db "hello", 0x0d, 0x0a, 0
+msgworld:
+    db "world", 0x0d, 0x0a, 0
+
+
+#----- result  -----#
+
+>h
+hello
+>w
+world
+>q
+
+end of program 
+
+EAX = 0x00000071
+ECX = 0x00000000
+EDX = 0x000003f8
+EBX = 0x00000000
+ESP = 0x00007c00
+EBP = 0x00000000
+ESI = 0x00007c4f
+EDI = 0x00000000
+EIP = 0x000000
 ```
