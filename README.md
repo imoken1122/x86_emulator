@@ -9,5 +9,5 @@
 
 
 ```
-$ cargo run bin/subroutin32.bin
+$ cargo run <-q> bin/subroutin32.bin
 ```
