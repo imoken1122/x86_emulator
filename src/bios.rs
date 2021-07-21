@@ -12,7 +12,11 @@ pub fn put_string(s: &str ){
 	}
 }
 
-
+pub fn num2ascii(ch : u8) -> String{
+	let bytes: &[u8] = &[ch];
+	let converted: String = String::from_utf8(bytes.to_vec()).unwrap();
+	converted
+}
 pub fn bios_video_teletype(emu : &mut Emulator){
 
 	let color = get_register8(emu,Register::EBX as usize) & 0x0f; // bl の下位4bitで光度と色
@@ -22,16 +26,15 @@ pub fn bios_video_teletype(emu : &mut Emulator){
 	if (color & 0x08) != 0 {
 		bright = 1;
 	}
-	let bytes: &[u8] = &[ch];
-	let converted: String = String::from_utf8(bytes.to_vec()).unwrap();
-	let buf = format!("\x1b[{};{}m{}\x1b[0m",bright,terminal_color,converted);
+	let converted_ch = num2ascii(ch);
+	let buf = format!("\x1b[{};{}m{}\x1b[0m",bright,terminal_color,converted_ch);
 
-	put_string(&buf)
+	put_string(&buf);
 }
 
 pub fn bios_video(emu : &mut Emulator){
 
-	let func : u8 = get_register8(emu,Register::EAX as usize + 4 );
+	let func : u8 = get_register8(emu,Register::EAX as usize + 4 ); // case get_register8, EAX = AL , EAX + 4 = AH
 
 	match func{
 		0x0e => bios_video_teletype(emu),

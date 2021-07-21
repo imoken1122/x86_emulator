@@ -41,10 +41,11 @@ pub fn create_emulator(size: usize,eip:u32,esp : u32 ) -> Emulator
 }
 
 fn dump_registers(emu:&mut Emulator){
+
     for i in 0..REGISTER_COUNT{
         println!("{} = {:#010x}", register_name[i as usize],emu.registers[i as usize]); 
     }
-    println!("EIP = {:#08x}\n",emu.eip);
+    println!("EIP = {:#010x}\n",emu.eip);
 }
 fn read_to_memory(file : &mut File, emu : &mut Emulator) -> Result<usize, io::Error> {
     let mut cnt : usize= 0;

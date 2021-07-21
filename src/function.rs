@@ -138,8 +138,7 @@ pub fn is_overflow(emu: &mut Emulator) -> bool{
 use libc::*;
 pub fn io_in8(address : u16) -> u8{
     match address{
-        // 0x03f8
-        1016 => unsafe {libc::getchar() as u8 },
+        0x03f8 => unsafe {libc::getchar() as u8 },
         _ => 0,
     }
 }
@@ -147,7 +146,6 @@ pub fn io_in8(address : u16) -> u8{
 
 pub fn io_out8(address : u16, value : u8){
     match address{ 
-        // 0x03f8
         0x3f8 => unsafe {libc::putchar(value.into())},
         _ => 0,
     };
