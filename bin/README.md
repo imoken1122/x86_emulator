@@ -1,7 +1,7 @@
 # test
 
 
-## test1
+## test1 (__mov_r32_imm8.bin__)
 
 __mov r32 imm32__
 
@@ -27,7 +27,7 @@ EIP = 0x00000000
 ```
 
 
-## test2
+## test2 (__modrm-test.bin__)
 
 __ModR/M__ ( `mov, add, sub, inc,`)
 ```
@@ -56,7 +56,7 @@ EDI = 0x00000008
 EIP = 0x00000000
 ```
 
-## test3
+## test3 (__call-test.bin , call-arg-test.bin__ )
 __call_func__ 
 ```
 #---- asm----#
@@ -139,7 +139,7 @@ EIP = 0x00000000
 ```
 
 
-## test4
+## test4 (__if-test.bin, if-goto-test.bin__)
 
 __if__, __jump by eflags__(js,jz,jl,jo,jl etc..)
 ```
@@ -175,7 +175,7 @@ EIP = 0x00000000
 
 ```
 
-## test5
+## test5 (__leave-test.bin__)
 
 __while__
 
@@ -243,7 +243,7 @@ EIP = 0x000000
 
 
 
-## test6 
+## test6 (__in.bin, out.bin, select.bin__)
 
 __I/O__
 
@@ -315,4 +315,53 @@ EBP = 0x00000000
 ESI = 0x00007c4f
 EDI = 0x00000000
 EIP = 0x000000
+```
+
+
+
+## test7 (__subroutin32.bin__)
+
+```
+
+#----- asm  -----#
+
+BITS 32
+    org 0x7c00
+start:            ; プログラムの開始
+    mov esi, msg
+    call puts     ; サブルーチンを呼び出す
+    jmp 0
+
+puts:
+    mov al, [esi]  ; 1文字読み込む
+    inc esi
+    cmp al, 0     ; 文字列の末尾
+    je  puts_end  ; に来たら終了
+    mov ah, 0x0e
+    mov ebx, 12
+    int 0x10      ; BIOS を呼び出す
+    jmp puts
+puts_end:
+    ret           ; サブルーチンから抜ける
+
+msg:
+    db "hello, world", 0x0d, 0x0a, 0
+
+#----- result  -----#
+
+hello, world (赤色で表示される)
+
+
+end of program 
+
+
+EAX = 0x00000e00
+ECX = 0x00000000
+EDX = 0x00000000
+EBX = 0x0000000c
+ESP = 0x00007c00
+EBP = 0x00000000
+ESI = 0x00007c31
+EDI = 0x00000000
+EIP = 0x00000000
 ```
