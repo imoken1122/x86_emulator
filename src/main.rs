@@ -8,6 +8,7 @@ use std::io;
 pub mod instruction;
 pub mod function;
 pub mod modrm;
+pub mod bios;
 use instruction::*;
 use function::*;
 

@@ -2,6 +2,7 @@
 use crate::*;
 use function::*;
 use modrm::*;
+use bios::*;
 use std::convert::TryInto;
 
 
@@ -31,10 +32,12 @@ pub fn mov_rm32_imm32(emu: &mut Emulator){
 	emu.eip += 4;
 	set_rm32(emu, &mut modrm, value);
 }
+
+//fix
 pub fn mov_r8_imm8(emu: &mut Emulator){
 	let reg = get_code8(emu,0) - 0xB0;
 	let value = get_code8(emu,1);
-	set_register8(emu,reg.try_into().unwrap(),value,1);
+	set_register8(emu,reg.try_into().unwrap(),value);
 	emu.eip += 2;
 }
 pub fn mov_rm8_r8(emu: &mut Emulator){
@@ -185,12 +188,12 @@ pub fn cmp_rm32_imm8(emu: &mut Emulator, modrm: &mut ModRM){
 	let rm32 : u32 = get_rm32(emu, modrm);
 	let imm8 : u32 = get_sign_code8(emu,0) as u32;
 	emu.eip += 1; //
-	let res  = rm32 - imm8 ;
+	let res  = rm32 as i32 - imm8 as i32;
 	update_eflags_sub(emu , rm32, imm8 ,res as u64);// converting u64 is to know carry 
 }
 pub fn cmp_al_imm8(emu: &mut Emulator){
 	let imm8 : u8 = get_code8(emu,1);
-	let al : u8 = get_register8(emu,Register::EAX as usize,1);
+	let al : u8 = get_register8(emu,Register::EAX as usize);
 	let res = (al as i8 - imm8 as i8) as u8;
 
 	update_eflags_sub(emu ,al.try_into().unwrap(), imm8.try_into().unwrap(), res.try_into().unwrap());
@@ -265,7 +268,22 @@ pub fn jno(emu: &mut Emulator){
 	}
 	emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
 }
-
+pub fn jge(emu: &mut Emulator) {
+    let mut diff = 0;
+    // SF = OF
+    if is_sign(emu) == is_overflow(emu) {
+        diff = get_sign_code8(emu, 1);
+    }
+    emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
+pub fn jg(emu: &mut Emulator) {
+    let mut diff = 0;
+    // ZF = 0 and SF = OF
+    if !is_zero(emu) && (is_sign(emu) == is_overflow(emu)) {
+        diff = get_sign_code8(emu, 1);
+    }
+    emu.eip = emu.eip.wrapping_add((diff + 2) as u32);
+}
 pub fn jl(emu : &mut Emulator){
 	let mut diff = 0;
 	// is_sign = 1 if a < b  else 0
@@ -287,18 +305,28 @@ pub fn jle(emu: &mut Emulator){
 pub fn in_al_dx(emu: &mut Emulator){
 	let address : u32 = get_register32(emu, Register::EDX as usize) & 0xffff;
 	let value : u8 = io_in8(address.try_into().unwrap());
-	set_register8(emu,Register::EAX as usize, value, 1); // EAX -> AL
+	set_register8(emu,Register::EAX as usize, value); // EAX -> AL
 	emu.eip += 1;
 }
 
 pub fn out_dx_al(emu : &mut Emulator){
 	let address : u32 = get_register32(emu, Register::EDX as usize) & 0xffff;
-	let value : u8 = get_register8(emu, Register::EAX as usize, 1); // EAX -> AL
+	let value : u8 = get_register8(emu, Register::EAX as usize); // EAX -> AL
 	io_out8(address.try_into().unwrap(), value);
 	
 	emu.eip += 1;
 }
 
+// int 0x*
+pub fn swi(emu: &mut Emulator){
+	let int_index : u8 = get_code8(emu,1);
+	emu.eip += 2;
+	match int_index {
+		0x10 => bios_video(emu),
+		_ => println!("unknown interrupt {:#02x}", int_index),
+	}
+
+}
 pub fn init_instruction(instructions : &mut InstType){
 	instructions[0x01] = Some(add_rm32_r32);
 	instructions[0x3b] = Some(cmp_r32_rm32);
@@ -326,7 +354,9 @@ pub fn init_instruction(instructions : &mut InstType){
 	instructions[0x78] = Some(js);
 	instructions[0x79] = Some(jns);
 	instructions[0x7C] = Some(jl);
+	instructions[0x7D] = Some(jge);
 	instructions[0x7E] = Some(jle);
+	instructions[0x7F] = Some(jg);
 
 	instructions[0x83] = Some(code_83);
 	instructions[0x88] = Some(mov_rm8_r8);
@@ -344,6 +374,7 @@ pub fn init_instruction(instructions : &mut InstType){
 	instructions[0xC3] = Some(ret);
 	instructions[0xC7] = Some(mov_rm32_imm32);
   	instructions[0xC9] = Some(leave);
+	instructions[0xcd] = Some(swi);
 	instructions[0xE8] = Some(call_rel32);
 	instructions[0xEB] = Some(short_jump);
 	instructions[0xEC] = Some(in_al_dx);

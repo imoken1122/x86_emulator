@@ -30,29 +30,23 @@ pub fn set_register32(emu : &mut Emulator,index: usize, value : u32){
 pub fn get_register32(emu : &mut Emulator, index : usize) -> u32{
     emu.registers[index]
 }
-pub fn get_register8(emu : &mut Emulator, index : usize, flag : i8) -> u8{
-    // 1 => Low
-    // 2 => High
-    // 3 => ALL
-    match flag{
-        1 => (emu.registers[index] & 0xff) as u8,
-        2 => ((emu.registers[index] >> 8) & 0xff ) as u8,
-        _ => 0,
+pub fn get_register8(emu : &mut Emulator, index : usize ) -> u8{
+    if index < 4 { 
+        (emu.registers[index] & 0xff) as u8
+    }
+    else{
+        ((emu.registers[index-4] >> 8) & 0xff ) as u8
     }
 }
-pub fn set_register8(emu: &mut Emulator,index : usize, value : u8, flag : u8){
-    match flag {
-        1 => {
+pub fn set_register8(emu: &mut Emulator,index : usize, value : u8){
+    if index < 4 {
             let r : u32 = emu.registers[index] & 0xffffff00;
             emu.registers[index] = r | (value as u32);
-        },
-        2 => {
-            let r : u32 = emu.registers[index] & 0xffff00ff;
-            emu.registers[index] = r | ((value as u32) << 8 );
-            },
-        _ => println!("not exist this flag {}", flag),
+        }
+    else{
+            let r : u32 = emu.registers[index-4] & 0xffff00ff;
+            emu.registers[index-4] = r | ((value as u32) << 8 );
     }
-
 }
 pub fn get_memory8(emu : &mut Emulator, address : usize) -> u8{
     emu.memory[address]
@@ -154,7 +148,7 @@ pub fn io_in8(address : u16) -> u8{
 pub fn io_out8(address : u16, value : u8){
     match address{ 
         // 0x03f8
-        1016 => unsafe {libc::putchar(value.into())},
+        0x3f8 => unsafe {libc::putchar(value.into())},
         _ => 0,
     };
 

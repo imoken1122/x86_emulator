@@ -95,7 +95,7 @@ pub fn get_rm32(emu : &mut Emulator, modrm : &mut ModRM) -> u32{ // [r + disp]
 }
 pub fn get_rm8(emu: &mut Emulator,modrm : &mut ModRM) -> u8{
 	if modrm.modv == 3 { 
-		get_register8(emu, modrm.rm.try_into().unwrap(),3)
+		get_register8(emu, modrm.rm.try_into().unwrap())
 	}
 	else{
 		let address = calc_memory_address(emu,modrm);
@@ -116,7 +116,7 @@ pub fn set_rm32(emu : &mut Emulator, modrm: &mut ModRM, value : u32) {
 
 pub fn set_rm8(emu: &mut Emulator, modrm : &mut ModRM, value : u8){
 	if modrm.modv == 3 { 
-		set_register8(emu,modrm.rm.try_into().unwrap(), value,3);
+		set_register8(emu,modrm.rm.try_into().unwrap(), value,);
 	}
 	else{
 		let address = calc_memory_address(emu,modrm);
@@ -129,12 +129,12 @@ pub fn set_r32(emu: &mut Emulator, modrm : &mut ModRM, value: u32) {
 	set_register32(emu,modrm.reg_index.try_into().unwrap(), value);
 }
 pub fn set_r8(emu: &mut Emulator, modrm : &mut ModRM, value : u8){
-	set_register8(emu,modrm.reg_index.try_into().unwrap(), value,1);
+	set_register8(emu,modrm.reg_index.try_into().unwrap(), value,);
 }
 
 pub fn get_r32(emu: &mut Emulator, modrm: &mut ModRM) -> u32{
 	get_register32(emu,modrm.reg_index.try_into().unwrap())
 }
 pub fn get_r8(emu: &mut Emulator, modrm: &mut ModRM) -> u8{
-	get_register8(emu,modrm.reg_index.try_into().unwrap(),1)
+	get_register8(emu,modrm.reg_index.try_into().unwrap(),)
 }
