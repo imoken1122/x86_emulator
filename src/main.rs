@@ -65,7 +65,7 @@ fn dump_memory(emu : &mut Emulator){
 fn main() {
     let mut args : Vec<String> = env::args().collect();
     let mut flag = 0;
-    if &args[1] == "q"{
+    if &args[1] == "-q"{
         flag = 1;
         args.remove(1);
     }
